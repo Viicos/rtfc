@@ -88,3 +88,6 @@ class RtfcConfigExample(SphinxDirective):
 
 def setup(app: Sphinx) -> None:
     app.add_directive("rtfc-config-example", RtfcConfigExample)
+
+    # Workaround for https://github.com/sphinx-doc/sphinx-argparse/issues/98:
+    app.extensions["sphinxarg.ext"].parallel_read_safe = False

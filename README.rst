@@ -4,13 +4,13 @@ rtfc
 
 |Pythons| |PyPI| |Docs| |Ruff|
 
-.. |Pythons| image:: https://img.shields.io/pypi/pyversions/rdfm.svg
+.. |Pythons| image:: https://img.shields.io/pypi/pyversions/rtfc.svg
   :alt: Supported Python versions
-  :target: https://pypi.org/project/rdfm/
+  :target: https://pypi.org/project/rtfc/
 
-.. |PyPI| image:: https://img.shields.io/pypi/v/rdfm.svg
+.. |PyPI| image:: https://img.shields.io/pypi/v/rtfc.svg
   :alt: PyPI - Version
-  :target: https://pypi.org/project/rdfm/
+  :target: https://pypi.org/project/rtfc/
 
 .. |Docs| image:: https://img.shields.io/readthedocs/rtfc.svg
   :alt: Documentation status

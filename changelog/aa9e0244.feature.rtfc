@@ -2,8 +2,5 @@
 date = 2026-08-06
 nonce = "aa9e0244"
 section = "feature"
-
-[metadata]
-gh_pr = 1
 +++
 Initial release.

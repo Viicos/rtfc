@@ -3,13 +3,19 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+from textwrap import indent
+
+from docutils import nodes
+from sphinx.application import Sphinx
+from sphinx.util.docutils import SphinxDirective
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'rtfc'
-copyright = '2026-%Y, Victorien'
-author = 'Victorien'
-release = '0.1.0'
+project = "rtfc"
+copyright = "2026-%Y, Victorien"
+author = "Victorien"
+release = "0.1.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -25,7 +31,6 @@ extensions = [
 
 rtfc_config_directory = "../.."
 
-templates_path = ['_templates']
 exclude_patterns = []
 
 intersphinx_mapping = {
@@ -40,7 +45,6 @@ issues_github_path = "Viicos/rtfc"
 
 html_baseurl = "https://rtfc.readthedocs.io/en/latest/"
 html_theme = "furo"
-html_static_path = ['_static']
 html_theme_options = {
     "source_repository": "https://github.com/Viicos/rtfc/",
     "source_branch": "main",
@@ -61,12 +65,6 @@ html_theme_options = {
 
 
 # -- Custom directives --------------------------------------------------------
-
-from textwrap import indent
-
-from docutils import nodes
-from sphinx.application import Sphinx
-from sphinx.util.docutils import SphinxDirective
 
 
 def _pyproject_variant(toml: str) -> str:

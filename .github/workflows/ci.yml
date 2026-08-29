@@ -31,7 +31,7 @@ jobs:
 
       - name: Install tox
         run: uv tool install --managed-python --python 3.13 tox --with tox-uv --with tox-gh
-  
+
       - name: Install Python ${{ matrix.python-version }}
         run: uv python install --managed-python ${{ matrix.python-version }}
 
@@ -53,6 +53,7 @@ jobs:
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           python-version: '3.14'
+          enable-cache: true # zizmor: ignore[cache-poisoning] (Job does not produce release artifacts and does not have sensitive permissions)
 
       - name: Install dependencies
         run: uv sync --group docs
@@ -65,8 +66,7 @@ jobs:
         run: |
           uv run sphinx-build --builder linkcheck --fail-on-warning "source" "build"
           uv run sphinx-build --builder html --fail-on-warning "source" "build"
-        working-directory:
-          ./docs
+        working-directory: ./docs
 
   build:
     name: Build project

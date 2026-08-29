@@ -35,6 +35,9 @@ dependencies = [
 [project.scripts]
 rtfc = "rtfc._cli:main"
 
+[project.entry-points."sphinx.builders"]
+rtfc-export = "rtfc._export._sphinx"
+
 [dependency-groups]
 dev = [
     "pyright",
@@ -106,8 +109,14 @@ strict = true
 
 [tool.rtfc]
 changelog = "docs/source/changelog.rst"
+
 [tool.rtfc.render]
 entry_template_file = "changelog/entry.rst.jinja"
+
+[tool.rtfc.export.github-markdown.engine]
+name = "sphinx"
+sphinx_directory = "docs/source"
+
 [tool.rtfc.metadata]
 gh_issue = {type = "integer"}
 gh_pr = {type = "integer"}

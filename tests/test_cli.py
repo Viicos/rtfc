@@ -117,7 +117,7 @@ def test_new_string_meta_value(project: Path) -> None:
 def test_new_unknown_section(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         main(["new", "--section", "typo"])
-    assert "argument --section: invalid choice: 'typo'" in capsys.readouterr().err
+    assert "argument -s/--section: invalid choice: 'typo'" in capsys.readouterr().err
 
 
 def test_new_help_lists_configured_sections(project: Path, capsys: pytest.CaptureFixture[str]) -> None:

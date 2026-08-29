@@ -86,7 +86,7 @@ Validate the configuration and the entries, typically in CI:
     $ rtfc check
     OK: 1 valid entries
 
-On release, combine the entries into the changelog. The version block is
+On release, combine the entries into the changelog. The release notes are
 inserted after the marker, and the entry files are deleted:
 
 .. code:: console

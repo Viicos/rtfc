@@ -10,3 +10,12 @@ current working directory.
    :module: rtfc._cli
    :func: _docs_parser
    :prog: rtfc
+
+Environment variables
+---------------------
+
+.. envvar:: EDITOR
+
+   The editor ``rtfc new`` opens the created entry in, when ``--content`` is
+   not given. When unset, the entry is created with a placeholder content
+   to edit afterwards.

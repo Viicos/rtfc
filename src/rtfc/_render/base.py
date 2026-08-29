@@ -20,7 +20,7 @@ class RenderError(Exception):
 
 @dataclass
 class SectionGroup:
-    """The entries of a changelog section, as exposed to version block templates."""
+    """The entries of a changelog section, as exposed to release notes templates."""
 
     id: str | None
     """Id of the section, or ``None`` for the unsectioned group."""
@@ -63,7 +63,7 @@ def sort_entries(entries: Sequence[Entry], keys: Sequence[str]) -> list[Entry]:
 
 
 class Renderer(ABC):
-    """Renders changelog entries into version blocks."""
+    """Renders changelog entries into release notes."""
 
     def __init__(self, *, config: Config, fmt: Format) -> None:
         self.config = config
@@ -78,8 +78,8 @@ class Renderer(ABC):
         """
 
     @abstractmethod
-    def render_block(self, entries: Sequence[Entry], *, header: str) -> str:
-        """Render entries into a version block, opened by the already-formatted ``header``.
+    def render_release_notes(self, entries: Sequence[Entry], *, header: str) -> str:
+        """Render entries into release notes, opened by the already-formatted ``header``.
 
         Raises:
             RenderError: If the entries cannot be rendered.

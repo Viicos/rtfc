@@ -11,7 +11,7 @@ Relative paths are resolved against the directory the configuration is discovere
 .. confval:: changelog
    :type: path
 
-   The changelog file version blocks are inserted into on release. Required;
+   The changelog file the release notes are inserted into on release. Required;
    the file must exist and contain the insert marker comment
    (``.. rtfc-insert`` for the rst format).
 
@@ -96,12 +96,12 @@ Relative paths are resolved against the directory the configuration is discovere
    :type: string
    :default: the template below
 
-   The Jinja template rendering a whole version block. The template receives:
+   The Jinja template rendering the whole release notes of a version. The template receives:
 
    ``header``
        The already-formatted version header.
    ``entries``
-       All the entries of the block.
+       All the entries of the release notes.
    ``sections``
        The entries grouped by section: the unsectioned group first, then the
        configured sections in order. Each group has ``id``, ``label``
@@ -146,7 +146,7 @@ Relative paths are resolved against the directory the configuration is discovere
    :type: path
    :default: unset
 
-   A file containing the version block template, as an alternative to
+   A file containing the release notes template, as an alternative to
    :confval:`render.template`.
 
    .. rtfc-config-example::
@@ -178,6 +178,42 @@ Relative paths are resolved against the directory the configuration is discovere
 
       [rtfc.render]
       entry_template_file = "entry.rst.jinja"
+
+.. confval:: export.<exporter>.engine
+   :type: table
+
+   :ref:`Exporters <export>`, converting the release notes to another format,
+   are configured with one table per exporter id. The ``engine`` table selects
+   and configures the format engine used to convert the format-specific syntax
+   of the entries; its ``name`` key discriminates the engine and its remaining
+   keys. The built-in ``markdown``, ``github-markdown`` and ``gitlab-markdown``
+   exporters all support the ``sphinx`` engine.
+
+   .. rtfc-config-example::
+
+      [rtfc.export.markdown.engine]
+      name = "sphinx"
+      sphinx_directory = "docs/source"
+
+.. confval:: export.<exporter>.engine.sphinx_directory
+   :type: path
+
+   The Sphinx source directory (containing :file:`conf.py`). Required.
+
+.. TODO use  ``:confval:sphinx:html_baseurl`` once https://github.com/sphinx-doc/sphinx/issues/14117 is fixed.
+
+.. confval:: export.<exporter>.engine.base_url
+   :type: string
+   :default: the ``html_baseurl`` Sphinx configuration value
+
+   Absolute URL of the published documentation, used to resolve relative links.
+
+   .. rtfc-config-example::
+
+      [rtfc.export.markdown.engine]
+      name = "sphinx"
+      sphinx_directory = "docs/source"
+      base_url = "https://rtfc.readthedocs.io/en/latest"
 
 .. seealso::
 

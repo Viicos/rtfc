@@ -47,10 +47,10 @@ def make_config(**render: Any) -> Config:
 
 def render(entries: Sequence[Entry], **render_opts: Any) -> str:
     renderer = JinjaRenderer(config=make_config(**render_opts), fmt=RST)
-    return renderer.render_block(entries, header=HEADER)
+    return renderer.render_release_notes(entries, header=HEADER)
 
 
-def test_render_block_sections_in_config_order() -> None:
+def test_render_release_notes_sections_in_config_order() -> None:
     entries = [
         make_entry("a", section="bugfix", content="Fix a bug."),
         make_entry("b", section="feature", content="Add a feature."),
@@ -72,13 +72,13 @@ def test_render_block_sections_in_config_order() -> None:
     )
 
 
-def test_render_block_empty_sections_omitted() -> None:
+def test_render_release_notes_empty_sections_omitted() -> None:
     entries = [make_entry("a", section="feature", content="Add a feature.")]
 
     assert "Bug fixes" not in render(entries)
 
 
-def test_render_block_unsectioned_entries_first_unlabeled() -> None:
+def test_render_release_notes_unsectioned_entries_first_unlabeled() -> None:
     entries = [
         make_entry("a", section="feature", content="Add a feature."),
         make_entry("b", content="General change."),
@@ -89,17 +89,17 @@ def test_render_block_unsectioned_entries_first_unlabeled() -> None:
     )
 
 
-def test_render_block_no_entries_renders_header_only() -> None:
+def test_render_release_notes_no_entries_renders_header_only() -> None:
     assert render([]) == HEADER
 
 
-def test_render_block_multiline_content_indented() -> None:
+def test_render_release_notes_multiline_content_indented() -> None:
     entries = [make_entry("a", content="Fix a bug\nspanning lines.")]
 
     assert render(entries).endswith("- Fix a bug\n  spanning lines.")
 
 
-def test_render_block_default_sorts_by_date() -> None:
+def test_render_release_notes_default_sorts_by_date() -> None:
     entries = [
         make_entry("b", date=datetime.date(2025, 8, 2), content="Second."),
         make_entry("a", date=datetime.date(2025, 8, 1), content="First."),
@@ -114,9 +114,9 @@ def test_custom_template_flat() -> None:
         make_entry("b", date=datetime.date(2025, 8, 1), section="feature", content="Add a feature."),
     ]
 
-    block = render(entries, template=FLAT_TEMPLATE)
+    notes = render(entries, template=FLAT_TEMPLATE)
 
-    assert block == "v1.0.0 (2025-08-01)\n-------------------\n\n- Add a feature.\n- Fix a bug."
+    assert notes == "v1.0.0 (2025-08-01)\n-------------------\n\n- Add a feature.\n- Fix a bug."
 
 
 def test_custom_template_sort_filter_arguments() -> None:
@@ -127,21 +127,21 @@ def test_custom_template_sort_filter_arguments() -> None:
         make_entry("c", metadata={"gh_issue": 1}, content="Issue one."),
     ]
 
-    block = render(entries, template=template)
+    notes = render(entries, template=template)
 
-    assert block.endswith("- Issue one.\n- Issue two.\n- No issue.")
+    assert notes.endswith("- Issue one.\n- Issue two.\n- No issue.")
 
 
 def test_template_from_file(tmp_path: Path) -> None:
     (tmp_path / "t.jinja").write_text("{{ header }} ({{ entries | length }} changes)")
     renderer = JinjaRenderer(config=make_config(template_file=tmp_path / "t.jinja"), fmt=RST)
 
-    block = renderer.render_block([make_entry("a")], header=HEADER)
+    notes = renderer.render_release_notes([make_entry("a")], header=HEADER)
 
-    assert block == f"{HEADER} (1 changes)"
+    assert notes == f"{HEADER} (1 changes)"
 
 
-def test_render_block_entry_template_with_metadata() -> None:
+def test_render_release_notes_entry_template_with_metadata() -> None:
     template = "{{ content }}{% if metadata.gh_issue %} (:gh:`{{ metadata.gh_issue }}`){% endif %}"
     entries = [
         make_entry("a", metadata={"gh_issue": 123}, content="Fix a bug."),
@@ -155,9 +155,9 @@ def test_jinja_renderer_entry_template_from_file(tmp_path: Path) -> None:
     (tmp_path / "t.jinja").write_text("{{ content }} (templated)")
     renderer = JinjaRenderer(config=make_config(entry_template_file=tmp_path / "t.jinja"), fmt=RST)
 
-    block = renderer.render_block([make_entry("a")], header=HEADER)
+    notes = renderer.render_release_notes([make_entry("a")], header=HEADER)
 
-    assert block.endswith("- Some change. (templated)")
+    assert notes.endswith("- Some change. (templated)")
 
 
 def test_custom_renderer_entry_hook() -> None:
@@ -167,9 +167,9 @@ def test_custom_renderer_entry_hook() -> None:
 
     renderer = UpperRenderer(config=make_config(), fmt=RST)
 
-    block = renderer.render_block([make_entry("a", content="Some change.")], header=HEADER)
+    notes = renderer.render_release_notes([make_entry("a", content="Some change.")], header=HEADER)
 
-    assert block.endswith("- SOME CHANGE.")
+    assert notes.endswith("- SOME CHANGE.")
 
 
 def test_custom_renderer_without_template_engine() -> None:
@@ -177,15 +177,15 @@ def test_custom_renderer_without_template_engine() -> None:
         def render_entry(self, entry: Entry) -> str:
             return entry.content
 
-        def render_block(self, entries: Sequence[Entry], *, header: str) -> str:
+        def render_release_notes(self, entries: Sequence[Entry], *, header: str) -> str:
             items = "\n".join(self.fmt.list_item(self.render_entry(entry)) for entry in entries)
             return f"{header}\n\n{items}"
 
     renderer = PlainRenderer(config=make_config(), fmt=RST)
 
-    block = renderer.render_block([make_entry("a", content="Some change.")], header=HEADER)
+    notes = renderer.render_release_notes([make_entry("a", content="Some change.")], header=HEADER)
 
-    assert block == f"{HEADER}\n\n- Some change."
+    assert notes == f"{HEADER}\n\n- Some change."
 
 
 def test_sort_entries_multiple_keys() -> None:
@@ -255,5 +255,5 @@ def test_entry_template_runtime_error() -> None:
 
 
 def test_template_runtime_error() -> None:
-    with pytest.raises(RenderError, match="Failed to render version block"):
+    with pytest.raises(RenderError, match="Failed to render release notes"):
         render([make_entry("a")], template="{{ header() }}")

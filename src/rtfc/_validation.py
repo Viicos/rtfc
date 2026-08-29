@@ -50,6 +50,7 @@ __all__ = (
     "bool_",
     "dict_of",
     "dir_path",
+    "discriminated_union",
     "file_path",
     "float_",
     "int_",
@@ -62,6 +63,7 @@ __all__ = (
 )
 
 T = TypeVar("T")
+SchemaT = TypeVar("SchemaT", bound="Schema")
 
 KeyPath: TypeAlias = tuple[str | int, ...]
 """Location of a value relative to the document root, e.g. ``('sections', 'feature', 'label')``."""
@@ -420,6 +422,39 @@ class _Record(Validator[dict[str, Any]]):
 
     def validate(self, value: object, context: ValidationContext) -> dict[str, Any]:
         return _validate_fields(self._fields, value, context)
+
+
+class _DiscriminatedUnion(Validator[SchemaT]):
+    def __init__(self, discriminator: str, variants: Mapping[str, type[SchemaT]]) -> None:
+        self._discriminator = discriminator
+        self._variants = variants
+
+    def validate(self, value: object, context: ValidationContext) -> SchemaT:
+        for variant in self._variants.values():
+            if isinstance(value, variant):
+                # Already-validated instances (e.g. used as field defaults) are passed through:
+                return value
+        if not isinstance(value, Mapping):
+            raise ValidationError.single(context.path, f"expected table, got {type(value).__name__}")
+        if self._discriminator not in value:
+            raise ValidationError.single((*context.path, self._discriminator), "missing required key")
+        tag = value[self._discriminator]
+        variant = self._variants.get(tag) if isinstance(tag, str) else None
+        if variant is None:
+            expected = ", ".join(map(repr, self._variants))
+            raise ValidationError.single(
+                (*context.path, self._discriminator), f"expected one of {expected}, got {tag!r}"
+            )
+        return variant.validate(value, context)
+
+
+def discriminated_union(discriminator: str, variants: Mapping[str, type[SchemaT]]) -> Validator[SchemaT]:
+    """Create a validator dispatching a table to a schema based on a discriminator key.
+
+    The value of the ``discriminator`` key selects the :class:`Schema` in
+    ``variants`` the whole table is validated against.
+    """
+    return _DiscriminatedUnion(discriminator, variants)
 
 
 def record(fields: Mapping[str, Field[Any]]) -> Validator[dict[str, Any]]:

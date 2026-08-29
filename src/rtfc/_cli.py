@@ -19,6 +19,7 @@ from typing import Any
 from rtfc._changelog import ChangelogError, insert_version
 from rtfc._config import Config, ConfigError, MetadataFieldConfig, SectionConfig, load_config
 from rtfc._entry import Entry, EntryError, load_entries
+from rtfc._export import ExportError, get_exporter
 from rtfc._format import Format, FormatError, get_format
 from rtfc._render import JinjaRenderer, RenderError
 from rtfc._validation import ValidationContext, ValidationError
@@ -31,10 +32,25 @@ class _Args(argparse.Namespace):
     # build:
     version: str = ""
     dry_run: bool = False
+    # export:
+    exporter: str = ""
     # new:
     section: str | None = None
     meta: list[tuple[str, Any]] | None = None
     content: str | None = None
+
+
+def _export(args: _Args, config: Config) -> int:
+    """Handle the ``export`` command: print the entries in the exporter's format."""
+    exporter = get_exporter(config, args.exporter)
+    fmt, entries = _load(config)
+    if not entries:
+        print("No changelog entries found", file=sys.stderr)
+        return 1
+    renderer = JinjaRenderer(config=config, fmt=fmt)
+    notes = renderer.render_release_notes(entries, header=fmt.version_header(args.version, datetime.date.today()))
+    print(exporter.export(notes))
+    return 0
 
 
 def _parse_value(raw: str) -> Any:
@@ -65,8 +81,14 @@ def _build_parser(config: Config) -> argparse.ArgumentParser:
     build = subparsers.add_parser("build", help="Combine the changelog entries into the changelog.")
     build.add_argument("--version", required=True, help="Release version; entry files are deleted after building.")
     build.add_argument(
-        "--dry-run", action="store_true", help="Print the version block instead of updating the changelog."
+        "--dry-run", action="store_true", help="Print the release notes instead of updating the changelog."
     )
+
+    export = subparsers.add_parser(
+        "export", help="Print the entries in another format, converted with the configured exporter."
+    )
+    export.add_argument("exporter", choices=list(config.export) or None, help="Id of the configured exporter to use.")
+    export.add_argument("--version", required=True, help="Release version used for the release notes header.")
 
     new = subparsers.add_parser("new", help="Create a changelog entry.", description="Create a changelog entry.")
     new.add_argument("-s", "--section", choices=list(config.sections) or None, help="Section id of the entry.")
@@ -85,7 +107,7 @@ def _docs_parser() -> argparse.ArgumentParser:
     ``construct()`` bypasses validation, so the documented ``--section``
     choices are the default sections.
     """
-    return _build_parser(Config.construct(changelog=Path("changelog.rst"), sections=['depends on configuration.']))
+    return _build_parser(Config.construct(changelog=Path("changelog.rst"), sections=["depends on configuration."]))
 
 
 def _load(config: Config) -> tuple[Format, list[Entry]]:
@@ -110,13 +132,13 @@ def _build(args: _Args, config: Config) -> int:
         return 1
     renderer = JinjaRenderer(config=config, fmt=fmt)
     header = fmt.version_header(args.version, datetime.date.today())
-    block = renderer.render_block(entries, header=header)
+    notes = renderer.render_release_notes(entries, header=header)
     if args.dry_run:
-        print(block)
+        print(notes)
         return 0
 
     changelog = config.changelog.read_text(encoding="utf-8")
-    config.changelog.write_text(insert_version(changelog, block, fmt=fmt), encoding="utf-8")
+    config.changelog.write_text(insert_version(changelog, notes, fmt=fmt), encoding="utf-8")
     for entry in entries:
         entry.path.unlink()
     print(f"Updated {config.changelog}")
@@ -218,8 +240,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _check(config)
         if args.command == "build":
             return _build(args, config)
+        if args.command == "export":
+            return _export(args, config)
         return _new(args, config)
-    except (ChangelogError, EntryError, FormatError, RenderError) as exc:
+    except (ChangelogError, EntryError, ExportError, FormatError, RenderError) as exc:
         print(exc, file=sys.stderr)
         return 1
     except (EOFError, KeyboardInterrupt):

@@ -1,0 +1,9 @@
++++
+date = 2026-08-07
+nonce = "83bbdfb6"
+section = "feature"
+
+[metadata]
+gh_issue = 7
++++
+Add the :commands:command:`export <rtfc-export>` command, exporting entries as markdown through the project's sphinx build. See :ref:`configuration` for setup.

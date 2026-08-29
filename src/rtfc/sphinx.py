@@ -73,10 +73,10 @@ class UnreleasedDirective(SphinxDirective):
                 note = indent("\n".join(self.content), "   ")
                 header = f"{header}\n\n.. note::\n\n{note}"
             renderer = JinjaRenderer(config=config, fmt=fmt)
-            block = renderer.render_block(entries, header=header)
+            notes = renderer.render_release_notes(entries, header=header)
         except (ConfigError, EntryError, FormatError, RenderError) as exc:
             raise self.error(f"rtfc: {exc}") from exc
-        return self.parse_text_to_nodes(block, allow_section_headings=True)
+        return self.parse_text_to_nodes(notes, allow_section_headings=True)
 
     def _note_dependencies(self, config_directory: Path, entry_directory: Path) -> None:
         """Mark the configuration and entry files as dependencies of the document.

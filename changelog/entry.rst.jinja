@@ -1,4 +1,4 @@
 {% set refs = [] %}
 {% if metadata.gh_issue %}{% set _ = refs.append("Issue :issue:`%s`" % metadata.gh_issue) %}{% endif %}
 {% if metadata.gh_pr %}{% set _ = refs.append("PR :pr:`%s`" % metadata.gh_pr) %}{% endif %}
-{{ content }}{% if refs %} ({{ refs | join(", ") }}){% endif %}
+{{ content }}{% if refs %} ({{ refs | join(", ") }}).{% endif %}

@@ -1,8 +1,8 @@
-"""Assembly of version blocks into the changelog document.
+"""Assembly of release notes into the changelog document.
 
 The changelog document must contain an insert marker (a format comment, e.g.
-``.. rtfc-insert`` for rst): released version blocks are inserted right after
-it, newest first.
+``.. rtfc-insert`` for rst). The release notes of released versions are inserted
+right after it.
 """
 
 from __future__ import annotations
@@ -21,12 +21,12 @@ def _with_trailing_newline(lines: list[str]) -> str:
     return text if text.endswith("\n") else text + "\n"
 
 
-def insert_version(changelog: str, block: str, *, fmt: Format) -> str:
-    """Insert a released version block right after the insert marker.
+def insert_version(changelog: str, notes: str, *, fmt: Format) -> str:
+    """Insert the release notes of a version right after the insert marker.
 
     Args:
         changelog: The current changelog text.
-        block: The rendered version block.
+        notes: The rendered release notes.
         fmt: The documentation format.
 
     Raises:
@@ -39,7 +39,7 @@ def insert_version(changelog: str, block: str, *, fmt: Format) -> str:
             rest = lines[index + 1 :]
             while rest and not rest[0].strip():
                 rest.pop(0)
-            inserted = [*lines[: index + 1], "", *block.split("\n")]
+            inserted = [*lines[: index + 1], "", *notes.split("\n")]
             if rest:
                 inserted += ["", *rest]
             return _with_trailing_newline(inserted)

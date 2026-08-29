@@ -16,4 +16,5 @@ rtfc documentation
    configuration
    cli
    sphinx
+   export
    changelog

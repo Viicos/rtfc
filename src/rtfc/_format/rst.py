@@ -20,3 +20,8 @@ class RstFormat(Format):
 
     def comment(self, text: str) -> str:
         return f".. {text}"
+
+    def list_item(self, text: str) -> str:
+        first, *rest = text.splitlines()
+        lines = [f"- {first}", *(f"  {line}" if line else "" for line in rest)]
+        return "\n".join(lines)

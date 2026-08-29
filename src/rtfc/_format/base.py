@@ -6,9 +6,8 @@ import datetime
 from abc import ABC, abstractmethod
 from typing import ClassVar, final
 
-# The marker identity is format-independent (only the comment syntax around it
-# varies), so the changelog assembly logic can locate it in any format:
 _INSERT_MARKER = "rtfc-insert"
+"""The marker name after which the release notes of new versions are inserted."""
 
 
 class FormatError(Exception):
@@ -47,13 +46,15 @@ class Format(ABC):
         """Format the heading of an entry section."""
         return self.heading(label, 2)
 
+    @abstractmethod
     def list_item(self, text: str) -> str:
-        """Format already-rendered entry text as a list item."""
-        first, *rest = text.splitlines()
-        lines = [f"- {first}", *(f"  {line}" if line else "" for line in rest)]
-        return "\n".join(lines)
+        """Format already-rendered entry text as a list item.
+
+        Continuation lines of multiline text are expected to be handled (e.g.
+        indented to align with the item marker).
+        """
 
     @final
     def insert_marker(self) -> str:
-        """The comment after which new version blocks are inserted."""
+        """The comment after which the release notes of new versions are inserted."""
         return self.comment(_INSERT_MARKER)

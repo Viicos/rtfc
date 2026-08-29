@@ -13,6 +13,7 @@ from rtfc._validation import (
     bool_,
     dict_of,
     dir_path,
+    discriminated_union,
     file_path,
     float_,
     int_,
@@ -395,3 +396,56 @@ def test_schema_instances_passed_through() -> None:
     inner = Inner.validate({"name": "n"})
 
     assert Inner.validate(inner) is inner
+
+
+class Cat(Schema):
+    kind = Field(str_)
+    lives = Field(int_, default=9)
+
+
+class Dog(Schema):
+    kind = Field(str_)
+    good_boy = Field(bool_, default=True)
+
+
+ANIMAL = discriminated_union("kind", {"cat": Cat, "dog": Dog})
+
+
+def test_discriminated_union_dispatches() -> None:
+    assert ANIMAL.validate({"kind": "cat", "lives": 7}, CTX) == Cat.construct(kind="cat", lives=7)
+    assert ANIMAL.validate({"kind": "dog"}, CTX) == Dog.construct(kind="dog")
+
+
+def test_discriminated_union_passes_instances_through() -> None:
+    cat = Cat.construct(kind="cat")
+
+    assert ANIMAL.validate(cat, CTX) is cat
+
+
+def test_discriminated_union_rejects_non_mapping() -> None:
+    with pytest.raises(ValidationError, match="expected table, got list"):
+        ANIMAL.validate([], CTX)
+
+
+def test_discriminated_union_missing_discriminator() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ANIMAL.validate({"lives": 7}, ValidationContext(path=("pet",)))
+
+    assert issues(exc_info) == [(("pet", "kind"), "missing required key")]
+
+
+def test_discriminated_union_unknown_tag() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ANIMAL.validate({"kind": "fox"}, ValidationContext(path=("pet",)))
+
+    assert issues(exc_info) == [(("pet", "kind"), "expected one of 'cat', 'dog', got 'fox'")]
+
+
+def test_discriminated_union_variant_issues() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ANIMAL.validate({"kind": "cat", "lives": "x", "typo": 1}, ValidationContext(path=("pet",)))
+
+    assert issues(exc_info) == [
+        (("pet", "lives"), "expected int, got str"),
+        (("pet", "typo"), "unknown key"),
+    ]

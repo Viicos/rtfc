@@ -19,7 +19,7 @@ _env.filters["sort_entries"] = lambda entries, *keys: sort_entries(entries, keys
 class JinjaRenderer(Renderer):
     """The default renderer, driven by the configured Jinja templates.
 
-    The version block template receives ``header``, ``entries`` (all entries),
+    The release notes template receives ``header``, ``entries`` (all entries),
     ``sections`` (the :class:`~rtfc._render.base.SectionGroup` of each
     section), the ``render_entry()``, ``list_item()`` and ``section_header()``
     functions, and can sort entries with the ``sort_entries()`` filter. The
@@ -60,7 +60,7 @@ class JinjaRenderer(Renderer):
             raise RenderError(f"{entry.path.name}: Failed to render entry: {exc}") from exc
         return text.strip()
 
-    def render_block(self, entries: Sequence[Entry], *, header: str) -> str:
+    def render_release_notes(self, entries: Sequence[Entry], *, header: str) -> str:
         context: dict[str, Any] = {
             "header": header,
             "entries": list(entries),
@@ -74,5 +74,5 @@ class JinjaRenderer(Renderer):
         except RenderError:
             raise
         except Exception as exc:
-            raise RenderError(f"Failed to render version block: {exc}") from exc
+            raise RenderError(f"Failed to render release notes: {exc}") from exc
         return text.strip()

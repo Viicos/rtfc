@@ -22,6 +22,7 @@ from rtfc._validation import (
     bool_,
     dict_of,
     dir_path,
+    discriminated_union,
     file_path,
     float_,
     int_,
@@ -33,7 +34,17 @@ from rtfc._validation import (
     str_,
 )
 
-__all__ = ("Config", "ConfigError", "MetadataFieldConfig", "RenderConfig", "SectionConfig", "load_config")
+__all__ = (
+    "Config",
+    "ConfigError",
+    "EngineConfig",
+    "ExporterConfig",
+    "MetadataFieldConfig",
+    "RenderConfig",
+    "SectionConfig",
+    "SphinxEngineConfig",
+    "load_config",
+)
 
 
 class ConfigError(Exception):
@@ -152,10 +163,10 @@ class RenderConfig(Schema):
     """Configuration of how entries are combined into the changelog."""
 
     template = Field(nullable(str_), default=None)
-    """Jinja template rendering a version block. Mutually exclusive with ``template_file``."""
+    """Jinja template rendering the release notes of a version. Mutually exclusive with ``template_file``."""
 
     template_file = Field(nullable(file_path), default=None)
-    """Path to a file containing the version block template, relative to the invocation
+    """Path to a file containing the release notes template, relative to the invocation
     directory (resolved at validation time)."""
 
     entry_template = Field(nullable(str_), default=None)
@@ -165,7 +176,7 @@ class RenderConfig(Schema):
     """Path to a file containing the entry template, relative to the configuration file."""
 
     def resolve_template(self) -> str:
-        """Return the effective version block template text.
+        """Return the effective release notes template text.
 
         Raises:
             ConfigError: If the template file cannot be read.
@@ -203,6 +214,35 @@ class RenderConfig(Schema):
             )
 
 
+class EngineConfig(Schema):
+    """Base configuration of a format engine, converting the format-specific syntax of entries."""
+
+    name = Field(str_)
+    """Name of the format engine, discriminating the engine configuration schema."""
+
+
+class SphinxEngineConfig(EngineConfig):
+    """Configuration of the ``sphinx`` format engine."""
+
+    sphinx_directory = Field(dir_path)
+    """The sphinx source directory (containing ``conf.py``), relative to the invocation
+    directory."""
+
+    base_url = Field(nullable(str_), default=None)
+    """Absolute URL of the published documentation, joined onto relative links in the
+    exported output. Defaults to the ``html_baseurl`` sphinx configuration value."""
+
+
+_ENGINE_CONFIGS: dict[str, type[EngineConfig]] = {"sphinx": SphinxEngineConfig}
+
+
+class ExporterConfig(Schema):
+    """Configuration of an exporter."""
+
+    engine = Field(discriminated_union("name", _ENGINE_CONFIGS))
+    """The format engine used by the exporter, discriminated by its ``name`` key."""
+
+
 def _default_sections() -> dict[str, SectionConfig]:
     return {
         "change": SectionConfig.construct(id="change", label="Changes"),
@@ -231,6 +271,9 @@ class Config(Schema):
 
     render = Field(RenderConfig, default_factory=RenderConfig.construct)
     """Rendering options."""
+
+    export = Field(dict_of(ExporterConfig), default_factory=dict)
+    """Exporter configurations, by exporter id."""
 
     def metadata_validator(self) -> Validator[dict[str, Any]] | None:
         """Build a validator for entry metadata from the configured schema.
